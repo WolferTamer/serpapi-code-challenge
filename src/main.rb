@@ -1,4 +1,4 @@
-require_relative 'carouselimageextractor'
+require_relative 'carousel_image_extractor'
 require 'net/http'
 
 puts "\e[1mWelcome to the Carousel Image Extractor!\e[22m"

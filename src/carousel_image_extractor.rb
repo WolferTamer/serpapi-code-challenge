@@ -15,6 +15,10 @@ class CarouselImageExtractor
     @images = gather_images
   end
 
+  def get_images
+     @images
+  end
+
   # Uses the provided document and pre-gathered image data to create a json file of all the entries in the carousel
   # Params:
   # - output_file_path: the path to write the resulting JSON data to
@@ -24,9 +28,18 @@ class CarouselImageExtractor
     # appear on the page. This may fail if another "kc:/" element precedes the expected one.
     parent_matches = @document.search('//div[contains(@data-attrid,"kc:/")][1]')
     parent = parent_matches.first
+    unless parent
+      save_file({},output_file_path)
+      return {}
+    end
 
     # The best way to find the type of information the carousel holds is to see which tab the user has selected
-    section_title = @document.search('//*[@role="tab"][@aria-selected="true"][1]').first.text.downcase
+    section = @document.search('//*[@role="tab"][@aria-selected="true"][1]').first
+    unless section
+      save_file({},output_file_path)
+      return {}
+    end
+    section_title = section.text.downcase
 
     # Each link within the carousel holds both the image and text of each entry. There tend to be no other links within
     # the carousel.
@@ -53,9 +66,9 @@ class CarouselImageExtractor
       json_array << info_object
     end
 
-    File.open(output_file_path, 'w') do |f|
-      f.write(JSON.pretty_generate({section_title => json_array}))
-    end
+    save_file({section_title => json_array}, output_file_path)
+
+    json_array
   end
 
   private
@@ -75,5 +88,11 @@ class CarouselImageExtractor
       image_object[image_id[1]] = image_data[1].encode('utf-8')
     end
     image_object
+  end
+
+  def save_file(json, path)
+    File.open(path, 'w') do |f|
+      f.write(JSON.pretty_generate(json))
+    end
   end
 end
