@@ -24,52 +24,55 @@ class CarouselImageExtractor
   # Params:
   # - output_file_path: the path to write the resulting JSON data to
   def extract(output_file_path)
+    begin
 
-    # Carousels tend to have a data-attrid that begins with "kc:/" and tend to be the first of the matching elements to
-    # appear on the page. This may fail if another "kc:/" element precedes the expected one.
-    parent_matches = @document.search('//div[contains(@data-attrid,"kc:/")][1]')
-    parent = parent_matches.first
-    unless parent
+      # Carousels tend to have a data-attrid that begins with "kc:/" and tend to be the first of the matching elements to
+      # appear on the page. This may fail if another "kc:/" element precedes the expected one.
+      parent_matches = @document.search('//div[contains(@data-attrid,"kc:/")][1]')
+      parent = parent_matches.first
+      unless parent
+        save_file({},output_file_path)
+        return {}
+      end
+
+      # The best way to find the type of information the carousel holds is to see which tab the user has selected
+      section = @document.search('//*[@role="tab"][@aria-selected="true"][1]').first
+
+      # If there is no section info, default to the "data" key
+      section_title = section ? section.text.downcase : "data"
+
+      # Each link within the carousel holds both the image and text of each entry. There tend to be no other links within
+      # the carousel.
+      links = parent.search('.//a')
+
+      json_array = []
+
+      links.each do |a|
+        img = a.search(".//img").first
+        extensions = a.search(".//div/div")
+
+        # The first object in this array is the title, so we shift it out
+        title = extensions.shift
+
+        # Some links start with "https://google...." while others do not, so we check for that here.
+        # Hidden images use a URL source while images that aren't hidden use data that we have to parse the script tags
+        # for
+        info_object = {
+          "name" => title.text,
+          "extensions" => extensions.map {|ext| ext.text },
+          "link" => a["href"].start_with?('/') ? "https://www.google.com" + a['href'] : a['href'],
+          "image" => img['data-src'] ? img['data-src'] : @images[img['id']],
+        }
+        json_array << info_object
+      end
+
+      save_file({section_title => json_array}, output_file_path)
+
+      json_array
+    rescue NoMethodError
       save_file({},output_file_path)
       return {}
     end
-
-    # The best way to find the type of information the carousel holds is to see which tab the user has selected
-    section = @document.search('//*[@role="tab"][@aria-selected="true"][1]').first
-    unless section
-      save_file({},output_file_path)
-      return {}
-    end
-    section_title = section.text.downcase
-
-    # Each link within the carousel holds both the image and text of each entry. There tend to be no other links within
-    # the carousel.
-    links = parent.search('.//a')
-
-    json_array = []
-
-    links.each do |a|
-      img = a.search(".//img").first
-      extensions = a.search(".//div/div")
-
-      # The first object in this array is the title, so we shift it out
-      title = extensions.shift
-
-      # Some links start with "https://google...." while others do not, so we check for that here.
-      # Hidden images use a URL source while images that aren't hidden use data that we have to parse the script tags
-      # for
-      info_object = {
-        "name" => title.text,
-        "extensions" => extensions.map {|ext| ext.text },
-        "link" => a["href"].start_with?('/') ? "https://www.google.com" + a['href'] : a['href'],
-        "image" => img['data-src'] ? img['data-src'] : @images[img['id']],
-      }
-      json_array << info_object
-    end
-
-    save_file({section_title => json_array}, output_file_path)
-
-    json_array
   end
 
   private

@@ -2,6 +2,11 @@ require_relative '../src/carousel_image_extractor'
 
 
 describe CarouselImageExtractor do
+  
+  unless Dir.exist?('test')
+    Dir.mkdir('test')
+  end
+  
   context "When testing the CarouselImageExtractor class" do
     it "the instance should have a Hash @images value" do
       cie = CarouselImageExtractor.new("spec/support/van-gogh/van-gogh-paintings.html")
@@ -11,7 +16,7 @@ describe CarouselImageExtractor do
     end
     it "the extract method should produce a new file and return an array" do
       cie = CarouselImageExtractor.new("spec/support/titanic-cast/titanic-cast.html")
-      file_name = "#{Time.new.inspect}_test.json"
+      file_name = "test/#{Time.new.inspect}_test.json"
       arr = cie.extract(file_name)
       expect(arr).to be_truthy
       expect(arr).to be_instance_of(Array)
@@ -22,7 +27,7 @@ describe CarouselImageExtractor do
     end
     it "the file produced by the extract method should follow the expected format" do
       cie = CarouselImageExtractor.new("spec/support/titanic-cast/titanic-cast.html")
-      file_name = "#{Time.new.inspect}_test.json"
+      file_name = "test/#{Time.new.inspect}_test.json"
       cie.extract(file_name)
       f = File.read(file_name)
       expect(f).to be_truthy
@@ -38,9 +43,30 @@ describe CarouselImageExtractor do
     end
   end
   context "When testing invalid entries to the CarouselImageExtractor class" do
-    it "an empty JSON file should be created" do
-      cie = CarouselImageExtractor.new("spec/support/test/test.html")
-      file_name = "#{Time.new.inspect}_test.json"
+    it "a nil parent object should return an empty JSON object" do
+      cie = CarouselImageExtractor.new("spec/support/failure/parent_nil.html")
+      file_name = "test/#{Time.new.inspect}_test.json"
+      arr = cie.extract(file_name)
+      expect(arr).to be_empty
+      expect(File).to exist(file_name)
+      f = File.read(file_name)
+      data = JSON.parse(f)
+      expect(data).to be_empty
+      File.delete(file_name)
+    end
+    it "the data key should be used" do
+      cie = CarouselImageExtractor.new("spec/support/failure/section_nil.html")
+      file_name = "test/#{Time.new.inspect}_test.json"
+      cie.extract(file_name)
+      expect(File).to exist(file_name)
+      f = File.read(file_name)
+      data = JSON.parse(f)
+      expect(data.keys).to include("data")
+      File.delete(file_name)
+    end
+    it "an invalid parent will return an empty JSON object" do
+      cie = CarouselImageExtractor.new("spec/support/failure/wrong_parent.html")
+      file_name = "test/#{Time.new.inspect}_test.json"
       arr = cie.extract(file_name)
       expect(arr).to be_empty
       expect(File).to exist(file_name)
@@ -51,9 +77,17 @@ describe CarouselImageExtractor do
     end
   end
   context "When comparing with expected values" do
+    after {
+      file_names = Dir.entries("test")
+      file_names.each do |file_name|
+        if file_name.end_with?("_test.json")
+          File.delete("test/#{file_name}")
+        end
+      end
+    }
     it "matches van gogh values" do
       cie = CarouselImageExtractor.new("spec/support/van-gogh/van-gogh-paintings.html")
-      file_name = "#{Time.new.inspect}_test.json"
+      file_name = "test/#{Time.new.inspect}_test.json"
       cie.extract(file_name)
       expect(File).to exist(file_name)
       f = File.read(file_name)
@@ -74,7 +108,7 @@ describe CarouselImageExtractor do
     end
     it "matches titanic values" do
       cie = CarouselImageExtractor.new("spec/support/titanic-cast/titanic-cast.html")
-      file_name = "#{Time.new.inspect}_test.json"
+      file_name = "test/#{Time.new.inspect}_test.json"
       cie.extract(file_name)
       expect(File).to exist(file_name)
       f = File.read(file_name)
@@ -95,7 +129,7 @@ describe CarouselImageExtractor do
     end
     it "matches steven spielberg values" do
       cie = CarouselImageExtractor.new("spec/support/steven-spielberg-movies/steven-spielberg-movies.html")
-      file_name = "#{Time.new.inspect}_test.json"
+      file_name = "test/#{Time.new.inspect}_test.json"
       cie.extract(file_name)
       expect(File).to exist(file_name)
       f = File.read(file_name)
