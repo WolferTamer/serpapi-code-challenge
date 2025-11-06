@@ -4,13 +4,13 @@ require_relative '../src/carousel_image_extractor'
 describe CarouselImageExtractor do
   context "When testing the CarouselImageExtractor class" do
     it "the instance should have a Hash @images value" do
-      cie = CarouselImageExtractor.new("files/van-gogh-paintings.html")
+      cie = CarouselImageExtractor.new("spec/support/van-gogh/van-gogh-paintings.html")
       images = cie.get_images
       expect(images).to be_truthy
       expect(images).to be_instance_of(Hash)
     end
     it "the extract method should produce a new file and return an array" do
-      cie = CarouselImageExtractor.new("files/titanic-cast.html")
+      cie = CarouselImageExtractor.new("spec/support/titanic-cast/titanic-cast.html")
       file_name = "#{Time.new.inspect}_test.json"
       arr = cie.extract(file_name)
       expect(arr).to be_truthy
@@ -21,7 +21,7 @@ describe CarouselImageExtractor do
       File.delete(file_name)
     end
     it "the file produced by the extract method should follow the expected format" do
-      cie = CarouselImageExtractor.new("files/titanic-cast.html")
+      cie = CarouselImageExtractor.new("spec/support/titanic-cast/titanic-cast.html")
       file_name = "#{Time.new.inspect}_test.json"
       cie.extract(file_name)
       f = File.read(file_name)
@@ -39,7 +39,7 @@ describe CarouselImageExtractor do
   end
   context "When testing invalid entries to the CarouselImageExtractor class" do
     it "an empty JSON file should be created" do
-      cie = CarouselImageExtractor.new("files/test.html")
+      cie = CarouselImageExtractor.new("spec/support/test/test.html")
       file_name = "#{Time.new.inspect}_test.json"
       arr = cie.extract(file_name)
       expect(arr).to be_empty
@@ -52,7 +52,7 @@ describe CarouselImageExtractor do
   end
   context "When comparing with expected values" do
     it "matches van gogh values" do
-      cie = CarouselImageExtractor.new("files/van-gogh-paintings.html")
+      cie = CarouselImageExtractor.new("spec/support/van-gogh/van-gogh-paintings.html")
       file_name = "#{Time.new.inspect}_test.json"
       cie.extract(file_name)
       expect(File).to exist(file_name)
@@ -60,8 +60,50 @@ describe CarouselImageExtractor do
       data = JSON.parse(f)
       arr = data[data.keys[0]]
 
-      expect(File).to exist("files/expected-array.json")
-      f2 = File.read("files/expected-array.json")
+      expect(File).to exist("spec/support/van-gogh/van-gogh-paintings.json")
+      f2 = File.read("spec/support/van-gogh/van-gogh-paintings.json")
+      data2 = JSON.parse(f2)
+      arr2 = data2[data.keys[0]]
+
+      arr.each_with_index do |item, index|
+        comparison = arr2[index]
+        output = (item.keys & comparison.keys).select { |key| item[key].eql? comparison[key] }
+        expect(output).to be_truthy
+      end
+      File.delete(file_name)
+    end
+    it "matches titanic values" do
+      cie = CarouselImageExtractor.new("spec/support/titanic-cast/titanic-cast.html")
+      file_name = "#{Time.new.inspect}_test.json"
+      cie.extract(file_name)
+      expect(File).to exist(file_name)
+      f = File.read(file_name)
+      data = JSON.parse(f)
+      arr = data[data.keys[0]]
+
+      expect(File).to exist("spec/support/titanic-cast/titanic-cast.json")
+      f2 = File.read("spec/support/titanic-cast/titanic-cast.json")
+      data2 = JSON.parse(f2)
+      arr2 = data2[data.keys[0]]
+
+      arr.each_with_index do |item, index|
+        comparison = arr2[index]
+        output = (item.keys & comparison.keys).select { |key| item[key].eql? comparison[key] }
+        expect(output).to be_truthy
+      end
+      File.delete(file_name)
+    end
+    it "matches steven spielberg values" do
+      cie = CarouselImageExtractor.new("spec/support/steven-spielberg-movies/steven-spielberg-movies.html")
+      file_name = "#{Time.new.inspect}_test.json"
+      cie.extract(file_name)
+      expect(File).to exist(file_name)
+      f = File.read(file_name)
+      data = JSON.parse(f)
+      arr = data[data.keys[0]]
+
+      expect(File).to exist("spec/support/steven-spielberg-movies/steven-spielberg-movies.json")
+      f2 = File.read("spec/support/steven-spielberg-movies/steven-spielberg-movies.json")
       data2 = JSON.parse(f2)
       arr2 = data2[data.keys[0]]
 
