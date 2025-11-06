@@ -8,13 +8,14 @@ class CarouselImageExtractor
 
   def initialize (file_path)
     @document = File.open(file_path) { |f| Nokogiri::HTML5(f) }
-    @document.errors.each do |error|
-      puts error
+    if @document.errors.size > 0
+      puts "\nWARNING: Syntax errors were found within the HTML file. This may affect your results.\n"
     end
 
     @images = gather_images
   end
 
+  # Returns the @images member. Used in Rspec testing.
   def get_images
      @images
   end
