@@ -1,33 +1,52 @@
-# Highest level div for the images may have classes "TzHB6b j8lBAb p7kDMc cLjAic LMRCfc", must be verified with other
-# pages
-# iELo6 is the shared class for all the individual image sections, we can then grab the img value from that
+# Switch away from using classes, instead use data-attrid="kc:/..."
+# Get Highest level kc
+# Get list of all links inside that kc
+# find image inside the link
+# get raw text, parse it by new line
+
+
 
 require 'nokogiri'
 require 'json'
-
-van_gogh_doc = File.open('files/van-gogh-paintings.html') { |f| Nokogiri::HTML5(f) }
-van_gogh_doc.errors.each do |error|
+@image_id_regex = /ii=\['([^()]+?)'\]/
+@image_data_regex = /var s='([^()]+?)'/
+@van_gogh_doc = File.open('files/van-gogh-paintings.html') { |f| Nokogiri::HTML5(f) }
+@van_gogh_doc.errors.each do |error|
   puts error
 end
 
-parent_matches = van_gogh_doc.search('//div[@class="TzHB6b j8lBAb p7kDMc cLjAic LMRCfc"][1]')
+parent_matches = @van_gogh_doc.search('//div[contains(@data-attrid,"kc:/")][1]')
 parent = parent_matches.first
 
-images = parent.search('.//div[@class="iELo6"]')
+links = parent.search('.//a')
 
 json_array = []
 
-images.each do |image|
-  a = image.search(".//a").first
+@image_obj = {}
+
+def gather_scripts
+  @van_gogh_doc.search('//script').each do |script|
+    image_data = script.text.strip.match(@image_data_regex)
+    next unless image_data and image_data[1]
+    image_id = script.text.strip.match(@image_id_regex)
+    next unless image_id and image_id[1]
+    @image_obj[image_id[1]] = image_data[1].encode('utf-8')
+
+  end
+end
+
+gather_scripts
+
+links.each do |a|
   img = a.search(".//img").first
-  title = a.search('.//div[contains(@class,"pgNMRc")]').first
-  extensions = a.search('.//div[contains(@class,"cxzHyb")]')
+  extensions = a.search("./div/div")
+  title = extensions.shift
 
   info_object = {
     "name" => title.text,
     "extensions" => extensions.map {|ext| ext.text },
     "link" => "https://www.google.com" + a['href'],
-    "image" => img['data-src'] ? img['data-src'] : img['src'],
+    "image" => img['data-src'] ? img['data-src'] : @image_obj[img['id']],
   }
   json_array << info_object
 end
