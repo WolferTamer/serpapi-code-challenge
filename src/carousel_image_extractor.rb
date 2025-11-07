@@ -68,12 +68,15 @@ class CarouselImageExtractor
         # Some links start with "https://google...." while others do not, so we check for that here.
         # Hidden images use a URL source while images that aren't hidden use data that we have to parse the script tags
         # for
+        ext_text = (extensions.map {|ext| ext.text }).select {|text| text.length > 0}
         info_object = {
           "name" => title.text,
-          "extensions" => extensions.map {|ext| ext.text },
           "link" => a["href"].start_with?('/') ? "https://www.google.com" + a['href'] : a['href'],
           "image" => img['data-src'] ? img['data-src'] : @images[img['id']],
         }
+        unless ext_text.empty?
+          info_object["extensions"] = ext_text
+        end
         json_array << info_object
       end
 
@@ -100,13 +103,13 @@ class CarouselImageExtractor
       next unless image_id and image_id.size > 1
 
       # The second match group excludes the identifying regex (i.e. "ii=['....']")
-      image_object[image_id[1]] = image_data[1].encode('utf-8')
+      image_object[image_id[1]] = image_data[1].gsub('\x3d', '=')
     end
     image_object
   end
 
   def save_file(json, path)
-    File.open(path, 'w') do |f|
+    File.open(path, 'w:UTF-8') do |f|
       f.write(JSON.pretty_generate(json))
     end
   end

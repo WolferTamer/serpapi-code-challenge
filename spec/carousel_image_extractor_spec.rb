@@ -101,8 +101,7 @@ describe CarouselImageExtractor do
 
       arr.each_with_index do |item, index|
         comparison = arr2[index]
-        output = (item.keys & comparison.keys).select { |key| item[key].eql? comparison[key] }
-        expect(output).to be_truthy
+        expect(comparison == item).to be_truthy
       end
       File.delete(file_name)
     end
@@ -122,8 +121,7 @@ describe CarouselImageExtractor do
 
       arr.each_with_index do |item, index|
         comparison = arr2[index]
-        output = (item.keys & comparison.keys).select { |key| item[key].eql? comparison[key] }
-        expect(output).to be_truthy
+        expect(comparison == item).to be_truthy
       end
       File.delete(file_name)
     end
@@ -143,8 +141,7 @@ describe CarouselImageExtractor do
 
       arr.each_with_index do |item, index|
         comparison = arr2[index]
-        output = (item.keys & comparison.keys).select { |key| item[key].eql? comparison[key] }
-        expect(output).to be_truthy
+        expect(comparison == item).to be_truthy
       end
       File.delete(file_name)
     end
