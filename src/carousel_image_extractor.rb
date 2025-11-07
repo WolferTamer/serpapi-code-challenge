@@ -1,6 +1,16 @@
 require 'nokogiri'
 require 'json'
 
+# Complexity Analysis
+# Exact Big O time complexity is difficult to determine due to the use of XPaths, which vary in runtime wildly depending
+# on the exact algorithm libxml2 uses. For the purposes of this analysis n = the length of the HTML file while m = the
+# amount of entries inside the carousel.
+# Assuming the worst case scenario for a Node.search() function is O(n), the worst case time complexity for extract()
+# is O(n+m)
+# The worst case space complexity is also O(n+m), as we need to store the full html file and the array of information
+# to be saved.
+
+
 class CarouselImageExtractor
 
   @@image_id_regex = /ii=\['([^()]+?)'\]/
@@ -28,7 +38,8 @@ class CarouselImageExtractor
 
       # Carousels tend to have a data-attrid that begins with "kc:/" and tend to be the first of the matching elements to
       # appear on the page. This may fail if another "kc:/" element precedes the expected one.
-      parent_matches = @document.search('//div[contains(@data-attrid,"kc:/")][1]')
+      # O(n) worst case, which would be a html file that contains no div with that attribute.
+      parent_matches = @document.search('//div[starts-with(@data-attrid,"kc:/")][1]')
       parent = parent_matches.first
       unless parent
         save_file({},output_file_path)
